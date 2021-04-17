@@ -1,0 +1,98 @@
+{
+  "project_info": {
+    "project_number": "398802809651",
+    "project_id": "openvpnproject-bc4f2",
+    "storage_bucket": "openvpnproject-bc4f2.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:398802809651:android:85051db34c3a5f511c4446",
+        "android_client_info": {
+          "package_name": "com.duodev.maxxvpn"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "398802809651-016f3gvj62phldn1rks34hmjsg41b145.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.duodev.maxxvpn",
+            "certificate_hash": "07e837df247e6699e196e3a2e52abd900081b6d8"
+          }
+        },
+        {
+          "client_id": "398802809651-m9fhv9s0ab9ebun7i9pjj1n22pl7557g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCCPSouec8P7qPpVPa5uz9fbIwC5pyn78Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "398802809651-m9fhv9s0ab9ebun7i9pjj1n22pl7557g.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "398802809651-9s9sc726gdvpaitievthjt5cknjo661i.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.duodev.maxxvpn"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:398802809651:android:4e74a18d3919e18b1c4446",
+        "android_client_info": {
+          "package_name": "com.duodev.norwayvpn"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "398802809651-onqmfkl26lso4ea2p6g2hj41bjdkd53p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.duodev.norwayvpn",
+            "certificate_hash": "07e837df247e6699e196e3a2e52abd900081b6d8"
+          }
+        },
+        {
+          "client_id": "398802809651-m9fhv9s0ab9ebun7i9pjj1n22pl7557g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCCPSouec8P7qPpVPa5uz9fbIwC5pyn78Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "398802809651-m9fhv9s0ab9ebun7i9pjj1n22pl7557g.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "398802809651-9s9sc726gdvpaitievthjt5cknjo661i.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.duodev.maxxvpn"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
