@@ -152,10 +152,10 @@ class _MyHomePageState extends State<MyHomePage> {
             itemBuilder: (context, index){
               return StreamBuilder<TaskSnapshot>(
                 builder: (context, snapShot) {
-                  return
-                    snapShot.hasError
-                        ? AlertDialog(content: Text("There is some error in uploading file"))
-                        : snapShot.hasData ?
+                  if (snapShot.hasError) {
+                    return AlertDialog(content: Text("There is some error in uploading file"));
+                  } else {
+                    return snapShot.hasData ?
                        /* Center(
                           child: LinearProgressIndicator(
                             value: snapShot.data.bytesTransferred.ceilToDouble(),
@@ -164,8 +164,12 @@ class _MyHomePageState extends State<MyHomePage> {
                   Container(
                     // TODO
                     child: ListTile(
-                      title: Text('Upload Task #${task.hashCode}'),
-                      subtitle: Text("text"),
+                      title: Padding(
+                        padding: const EdgeInsets.only(left: 10),
+                        child: Text(nameFile,style: TextStyle(
+                          fontSize: 18
+                        ),),
+                      ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
@@ -183,6 +187,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             .data.state == TaskState.success ? "Completed" : snapShot.data.state == TaskState.running ? "In Progress" : "Error"}"),
                       ),*/
                     ) : Container();
+                  }
                 },
                 stream: uploadedTasks[index].snapshotEvents,
               );
