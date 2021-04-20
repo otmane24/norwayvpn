@@ -4,8 +4,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
 import 'package:firebase_core/firebase_core.dart';
+import 'package:liquid_progress_indicator/liquid_progress_indicator.dart'; ;
+import 'package:percent_indicator/linear_percent_indicator.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,11 +39,14 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   FirebaseStorage _firebaseStorage = FirebaseStorage.instance;
-  FirebaseFirestore _firebaseFirestore =  FirebaseFirestore.instance;
+  FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
+  GlobalKey _sAlertDialogKey = GlobalKey();
   FileType _pickType = FileType.any;
   ListResult list;
   List listItem = [];
+  List nameServer = [];
+  List urlServer = [];
   String path;
   // ignore: deprecated_member_use
   List<UploadTask> uploadedTasks = List();
@@ -51,24 +55,140 @@ class _MyHomePageState extends State<MyHomePage> {
   UploadTask task;
   String nameFile;
 
-  deleteServer (String filePath) async{
-   var ref = FirebaseStorage.instance.refFromURL(filePath) ;
-   await ref.delete() ;
+  Future<void> _showAlertGialog(
+      List nameServer, List urlServer, int index, String filePath) async {
+    return showDialog<void>(
+
+        context: context,
+        barrierDismissible: true,
+        builder: (context) {
+          return AlertDialog(
+           
+            title: Text("Delete Server"),
+            content: Text("Do you want to delete ${nameServer[index]} ?"),
+            actions: [
+              // ignore: deprecated_member_use
+              RaisedButton(child: Text("No"), onPressed: (){
+                  return Navigator.of(context).pop();   
+              }
+              ),
+              // ignore: deprecated_member_use
+              RaisedButton(
+                  child: Text("Yes"),
+                  onPressed: () {
+                    deleteServer(
+                        nameServer, urlServer, index, urlServer[index]);
+                    Navigator.of(context).pop();
+                  }
+          ),
+            ],
+          );
+        });
   }
+
+  deleteServer(
+      List nameServer, List urlServer, int index, String filePath) async {
+    await _firebaseStorage.refFromURL(filePath).delete();
+    setState(() {
+      nameServer.removeAt(index);
+      urlServer.removeAt(index);
+    });
+    print(
+        "name : ${uploadedTasks.asMap().values} \n url : ${urlServer.length}");
+    _scaffoldKey.currentState.showSnackBar(SnackBar(
+      duration: Duration(milliseconds: 600),
+      content: Container(
+        height: 20,
+        child: Center(
+            child: Text(
+          "Delete success",
+          style: TextStyle(fontSize: 20),
+        )),
+      ),
+    ));
+  }
+
   writeFileToStorage(fileUrl) {
-    path = fileUrl ;
-    _firebaseFirestore.collection("vpn").add({"url": fileUrl}).whenComplete(
-        () => print("$fileUrl is saved in firestore"));
+    path = fileUrl;
   }
 
   saveFileUrlToFirebase(UploadTask task) {
     task.snapshotEvents.listen((snapShot) {
       if (snapShot.state == TaskState.success) {
-        snapShot.ref
-            .getDownloadURL()
-            .then((fileUrl) => writeFileToStorage(fileUrl));
+        snapShot.ref.getDownloadURL().then((fileUrl) {
+          setState(() {
+            //nameServer.single();
+            urlServer.add(fileUrl);
+          });
+        });
       }
     });
+    _scaffoldKey.currentState.showSnackBar(SnackBar(
+        backgroundColor: Colors.transparent,
+        content: Center(
+          child: StreamBuilder<TaskSnapshot>(
+              stream: task.snapshotEvents,
+              builder: (context, snapShot) {
+                if (snapShot.hasData) {
+                  final snap = snapShot.data;
+                  final progress = snap.bytesTransferred / snap.totalBytes;
+                  final percentage = (progress * 100).toStringAsFixed(2);
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Uploading :',
+                        style:
+                            TextStyle(fontSize: 24, color: Colors.blueAccent),
+                      ),
+                      SizedBox(
+                        height: 15.0,
+                      ),
+                        LiquidLinearProgressIndicator(
+                          value: 0.5, // Defaults to 0.5.
+                          valueColor: AlwaysStoppedAnimation(Colors.black), // Defaults to the current Theme's accentColor.
+                          backgroundColor: Colors.white, // Defaults to the current Theme's backgroundColor.
+                          borderColor: Colors.deepPurpleAccent,
+                          borderWidth: 1.0,
+                          borderRadius: 2.0,
+                          direction: Axis.vertical, // The direction the liquid moves (Axis.vertical = bottom to top, Axis.horizontal = left to right). Defaults to Axis.horizontal.
+                          center: Text("Loading..."),
+                        ),
+
+                     /* LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 5.5,
+                        backgroundColor: Colors.white,
+                        semanticsLabel: "up",
+                        semanticsValue: "up",
+                      ), */
+                      SizedBox(
+                        height: 15.0,
+                      ),
+                      Text(
+                        '$percentage %',
+                        style:
+                            TextStyle(fontSize: 24, color: Colors.blueAccent),
+                      )
+                    ],
+                  );
+                } else {
+                  return Container();
+                }
+              }),
+        ))); 
+    _scaffoldKey.currentState.showSnackBar(SnackBar(
+      duration: Duration(milliseconds: 600),
+      content: Container(
+        height: 20,
+        child: Center(
+            child: Text(
+          "The upload success",
+          style: TextStyle(fontSize: 20),
+        )),
+      ),
+    ));
   }
 
   uploadFileToStorage(File file) {
@@ -77,33 +197,7 @@ class _MyHomePageState extends State<MyHomePage> {
     task.snapshotEvents.listen((event) {
       print("cas ::{$event.state.toString()}");
     });
-    setState(() {
-
-    });
-    // not valide
-    StreamBuilder<TaskSnapshot>(
-        stream: task.snapshotEvents,
-        builder: (context, snapShot) {
-          if (snapShot.hasData) {
-            final snap  = snapShot.data;
-            final progress = snap.bytesTransferred / snap.totalBytes;
-            final percentage = (progress * 100).toStringAsFixed(2);
-            return Text('$percentage %',style: TextStyle(fontSize: 24),);
-          } else {
-            return Container();
-          }
-        });
-    // builder: (context, snapShot) {
-    //       return AlertDialog(
-    //           content: Text(snapShot.data.state == TaskState.success ?
-    //           "Completed" :
-    //           snapShot.data.state == TaskState.running
-    //               ? "In Progress"
-    //               : "Error")
-    //       );
-    //     }
-    // );
-    // not valide
+    _firebaseStorage.setMaxUploadRetryTime(Duration(seconds: 2));
     return task;
   }
 
@@ -129,6 +223,7 @@ class _MyHomePageState extends State<MyHomePage> {
           saveFileUrlToFirebase(task);
 
           setState(() {
+            nameServer.add(nameFile);
             uploadedTasks.add(task);
           });
         });
@@ -136,7 +231,7 @@ class _MyHomePageState extends State<MyHomePage> {
         print('error');
       }
     } catch (e) {
-      print(e);
+      print('eorre : $e');
     }
   }
 
@@ -162,74 +257,72 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.title),
-        ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: selectFileToUpload,
-          tooltip: 'Add server',
-          child: Icon(Icons.add),
-        ),
-        body: uploadedTasks.length == 0
-            ? Center(
-                child: Text(
-                  "Import a server ",
-                  style: TextStyle(fontSize: 20),
-                ),
-              )
-            : ListView.separated(
-                itemBuilder: (context, index) {
-                  return StreamBuilder<TaskSnapshot>(
-                    builder: (context, snapShot) {
-                      if (snapShot.hasError) {
-                        return AlertDialog(
-                            content:
-                                Text("There is some error in uploading file"));
-                      } else {
-                        return snapShot.hasData
-                            ?
-                            /* Center(
-                          child: LinearProgressIndicator(
-                            value: snapShot.data.bytesTransferred.ceilToDouble(),
-                          ),
-                        )*/
-                            Container(
-                                // TODO
-                                child:
-                                    ListTile(
-                      title: Padding(
-                        padding: const EdgeInsets.only(left: 10),
-                        child: Text(nameFile,style: TextStyle(
-                          fontSize: 18
-                        ),),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                            Container(
-                              child: IconButton(m
-                                  icon: Icon(Icons.clear),
-                                  onPressed: () => deleteServer (path)),
-                            )
-                        ],
-                      ),
-                    ),
-                                   /* Center(
-                                  child: AlertDialog(
-                                    content: Text(
-                                        "${snapShot.data.bytesTransferred}/${snapShot.data.totalBytes} ${snapShot.data.state == TaskState.success ? "Completed" : snapShot.data.state == TaskState.running ? "In Progress" : "Error"}"),
+      key: _scaffoldKey,
+      appBar: AppBar(
+        title: Text(widget.title),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          selectFileToUpload();
+        },
+        tooltip: 'Add server',
+        child: Icon(Icons.add),
+      ),
+      body: nameServer.length == 0
+          ? Center(
+              child: Text(
+                "Import Server",
+                style: TextStyle(fontSize: 20),
+              ),
+            )
+          : ListView.separated(
+              itemBuilder: (context, index) {
+                return StreamBuilder<TaskSnapshot>(
+                  builder: (context, snapShot) {
+                    if (snapShot.hasError) {
+                      return AlertDialog(
+                          content:
+                              Text("There is some error in uploading file"));
+                    } else {
+                      return snapShot.hasData
+                          ? (Container(
+                              child: ListTile(
+                                title: Padding(
+                                  padding: const EdgeInsets.only(left: 10),
+                                  child: Text(
+                                    nameServer[index],
+                                    style: TextStyle(fontSize: 18),
                                   ),
-                                ),*/
-                              )
-                            : Container();
-                      }
-                    },
-                    stream: uploadedTasks[index].snapshotEvents,
-                  );
-                },
-                separatorBuilder: (context, index) => Divider(),
-                itemCount: uploadedTasks.length)
-        // This trailing comma makes auto-formatting nicer for build methods.
-        );
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    Container(
+                                      child: IconButton(
+                                          icon: Icon(Icons.clear),
+                                          onPressed: () {
+                                            _showAlertGialog(
+                                                nameServer,
+                                                urlServer,
+                                                index,
+                                                urlServer[
+                                                    index]); // deleteServer(nameServer,urlServer,index,urlServer[index]);
+                                          }),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ))
+                          : Container();
+                    }
+                  },
+                  stream: uploadedTasks[index].asStream(),
+                );
+              },
+              separatorBuilder: (context, index) => Divider(),
+              itemCount: nameServer.length),
+
+      // This trailing comma makes auto-formatting nicer for build methods.
+    );
   }
 }
