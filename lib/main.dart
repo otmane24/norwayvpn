@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:liquid_progress_indicator/liquid_progress_indicator.dart';
-
+import 'package:http/http.dart' as http;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,12 +37,9 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   FirebaseStorage _firebaseStorage = FirebaseStorage.instance;
-  FirebaseFirestore _firebaseFirestore = FirebaseFirestore.instance;
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
-  GlobalKey _sAlertDialogKey = GlobalKey();
   FileType _pickType = FileType.any;
   ListResult list;
-  List listItem = [];
   List nameServer = [];
   List urlServer = [];
   String path;
@@ -54,25 +50,22 @@ class _MyHomePageState extends State<MyHomePage> {
   UploadTask task;
   String nameFile;
 
-  get myStream => null;
-
   Future<void> _showAlertGialog(
       List nameServer, List urlServer, int index, String filePath) async {
     return showDialog<void>(
-
         context: context,
         barrierDismissible: true,
         builder: (context) {
           return AlertDialog(
-           
             title: Text("Delete Server"),
             content: Text("Do you want to delete ${nameServer[index]} ?"),
             actions: [
               // ignore: deprecated_member_use
-              RaisedButton(child: Text("No"), onPressed: (){
-                  return Navigator.of(context).pop();   
-              }
-              ),
+              RaisedButton(
+                  child: Text("No"),
+                  onPressed: () {
+                    return Navigator.of(context).pop();
+                  }),
               // ignore: deprecated_member_use
               RaisedButton(
                   child: Text("Yes"),
@@ -80,8 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     deleteServer(
                         nameServer, urlServer, index, urlServer[index]);
                     Navigator.of(context).pop();
-                  }
-          ),
+                  }),
             ],
           );
         });
@@ -109,12 +101,8 @@ class _MyHomePageState extends State<MyHomePage> {
     ));
   }
 
-  writeFileToStorage(fileUrl) {
-    path = fileUrl;
-  }
-
-  saveFileUrlToFirebase(UploadTask task) {
-    task.snapshotEvents.listen((snapShot) {
+  saveFileUrlToFirebase(UploadTask task, bool etat) {
+    if(etat){task.snapshotEvents.listen((snapShot) {
       if (snapShot.state == TaskState.success) {
         snapShot.ref.getDownloadURL().then((fileUrl) {
           setState(() {
@@ -123,7 +111,8 @@ class _MyHomePageState extends State<MyHomePage> {
           });
         });
       }
-    });
+    }
+    );
     _scaffoldKey.currentState.showSnackBar(SnackBar(
         backgroundColor: Colors.transparent,
         content: Center(
@@ -141,12 +130,12 @@ class _MyHomePageState extends State<MyHomePage> {
                       Text(
                         'Uploading :',
                         style:
-                            TextStyle(fontSize: 24, color: Colors.blueAccent),
+                        TextStyle(fontSize: 24, color: Colors.blueAccent),
                       ),
                       SizedBox(
                         height: 15.0,
                       ),
-                        LiquidLinearProgressIndicator(
+                      /* LiquidLinearProgressIndicator(
                           value: 0.5, // Defaults to 0.5.
                           valueColor: AlwaysStoppedAnimation(Colors.black), // Defaults to the current Theme's accentColor.
                           backgroundColor: Colors.white, // Defaults to the current Theme's backgroundColor.
@@ -155,22 +144,20 @@ class _MyHomePageState extends State<MyHomePage> {
                           borderRadius: 2.0,
                           direction: Axis.vertical, // The direction the liquid moves (Axis.vertical = bottom to top, Axis.horizontal = left to right). Defaults to Axis.horizontal.
                           center: Text("Loading..."),
-                        ),
+                        ),*/
 
-                     /* LinearProgressIndicator(
+                      LinearProgressIndicator(
                         value: progress,
                         minHeight: 5.5,
                         backgroundColor: Colors.white,
-                        semanticsLabel: "up",
-                        semanticsValue: "up",
-                      ), */
+                      ),
                       SizedBox(
                         height: 15.0,
                       ),
                       Text(
                         '$percentage %',
                         style:
-                            TextStyle(fontSize: 24, color: Colors.blueAccent),
+                        TextStyle(fontSize: 24, color: Colors.blueAccent),
                       )
                     ],
                   );
@@ -178,23 +165,24 @@ class _MyHomePageState extends State<MyHomePage> {
                   return Container();
                 }
               }),
-        ))); 
+        )));
     _scaffoldKey.currentState.showSnackBar(SnackBar(
       duration: Duration(milliseconds: 600),
       content: Container(
         height: 20,
         child: Center(
             child: Text(
-          "The upload success",
-          style: TextStyle(fontSize: 20),
-        )),
+              "The upload success",
+              style: TextStyle(fontSize: 20),
+            )),
       ),
     ));
   }
+  }
 
-  uploadFileToStorage(File file) {
+  uploadFileToStorage(File file,String filename) {
     UploadTask task =
-        _firebaseStorage.ref().child("${nameFile.toString()}").putFile(file);
+        _firebaseStorage.ref().child(filename).putFile(file);
     task.snapshotEvents.listen((event) {
       print("cas ::{$event.state.toString()}");
     });
@@ -212,7 +200,7 @@ class _MyHomePageState extends State<MyHomePage> {
           .values
           .toString()
           .replaceAll(")", "")
-          .replaceAll("(", "");
+          .replaceAll("(", "").replaceAll(".ovpn", "");
       if (result != null) {
         selectedFiles.clear();
         result.files.forEach((selectedFile) {
@@ -220,8 +208,8 @@ class _MyHomePageState extends State<MyHomePage> {
           selectedFiles.add(file);
         });
         selectedFiles.forEach((file) {
-          final UploadTask task = uploadFileToStorage(file);
-          saveFileUrlToFirebase(task);
+          final UploadTask task = uploadFileToStorage(file,nameFile);
+          saveFileUrlToFirebase(task, true);
 
           setState(() {
             nameServer.add(nameFile);
@@ -233,6 +221,31 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     } catch (e) {
       print('eorre : $e');
+    }
+  }
+
+  Future downLoadServer(String vpnItem) async {
+    try {
+      Reference reference = _firebaseStorage.ref().child('$vpnItem.ovpn');
+      String url = await reference.getDownloadURL();
+
+      final http.Response downLoadData = await http.get(url);
+      final Directory systemTempDir = Directory.systemTemp;
+      final File tempFile = File('${systemTempDir.path}/$vpnItem.ovpn');
+      if (tempFile.existsSync()) {
+        await tempFile.delete();
+      }
+      await tempFile.create();
+      await tempFile.writeAsStringSync(downLoadData.body);
+
+      final UploadTask task = uploadFileToStorage(tempFile,'$vpnItem.ovpn');
+      saveFileUrlToFirebase(task, false);
+      setState(() {
+        urlServer.add(url);
+        uploadedTasks.add(task);
+      });
+    } catch (e) {
+      print("Error function download: ${e.toString()}");
     }
   }
 
@@ -249,9 +262,14 @@ class _MyHomePageState extends State<MyHomePage> {
               .fullPath
               .replaceAll(".ovpn", ""));
           print(nameServer[index]);
+          downLoadServer(nameServer[index]);
 
         }
+
       });
+      /*for (String item in nameServer) {
+           downLoadServer(item);
+        }*/
     });
     super.initState();
   }
@@ -282,9 +300,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 return StreamBuilder<TaskSnapshot>(
                   builder: (context, snapShot) {
                     if (snapShot.hasError) {
-                      return AlertDialog(
-                          content:
-                              Text("There is some error in uploading file"));
+                      return Text("There is some error in uploading file");
                     } else {
                       return snapShot.hasData
                           ? (Container(
@@ -318,11 +334,11 @@ class _MyHomePageState extends State<MyHomePage> {
                           : Container();
                     }
                   },
-                  stream: myStream ,
+                  stream: uploadedTasks[index].snapshotEvents,
                 );
               },
               separatorBuilder: (context, index) => Divider(),
-              itemCount: nameServer.length),
+              itemCount: uploadedTasks.length),
 
       // This trailing comma makes auto-formatting nicer for build methods.
     );
