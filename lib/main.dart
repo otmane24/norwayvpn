@@ -3,10 +3,9 @@ import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:liquid_progress_indicator/liquid_progress_indicator.dart'; ;
-import 'package:percent_indicator/linear_percent_indicator.dart';
+import 'package:liquid_progress_indicator/liquid_progress_indicator.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,6 +53,8 @@ class _MyHomePageState extends State<MyHomePage> {
   List<File> selectedFiles = List();
   UploadTask task;
   String nameFile;
+
+  get myStream => null;
 
   Future<void> _showAlertGialog(
       List nameServer, List urlServer, int index, String filePath) async {
@@ -240,14 +241,15 @@ class _MyHomePageState extends State<MyHomePage> {
     FirebaseStorage.instance.ref().listAll().then((value) {
       setState(() {
         list = value;
-        //print("index : ${list.items.length}");
         for (int index = 0; index < list.items.length; index++) {
-          listItem.add(list.items
+          nameServer.add(list.items
               .asMap()
               .values
               .elementAt(index)
               .fullPath
               .replaceAll(".ovpn", ""));
+          print(nameServer[index]);
+
         }
       });
     });
@@ -316,7 +318,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           : Container();
                     }
                   },
-                  stream: uploadedTasks[index].asStream(),
+                  stream: myStream ,
                 );
               },
               separatorBuilder: (context, index) => Divider(),
