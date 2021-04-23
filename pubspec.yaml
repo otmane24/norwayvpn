@@ -32,10 +32,18 @@ dependencies:
   firebase_storage: ^5.2.0
   percent_indicator: ^3.0.1
   liquid_progress_indicator: ^0.3.2
+  flutter_native_splash: ^0.3.2
+  connectivity: ^3.0.3
+  fluttertoast: ^8.0.4
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+flutter_native_splash:
+  color: "#1a1a1a"
+  image: assets/images/iconsplash_dark.png
+  android: true
+  ios: true
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

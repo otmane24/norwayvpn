@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.duodev.norwayvpn">
    <application
-        android:label="norwayvpn"
+        android:label="NorwayVPN"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

@@ -1,10 +1,12 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+import 'dart:async';
 import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
+
+import 'package:connectivity/connectivity.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:liquid_progress_indicator/liquid_progress_indicator.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 Future<void> main() async {
@@ -18,10 +20,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData(
-        floatingActionButtonTheme: FloatingActionButtonThemeData(
-          backgroundColor: Colors.deepOrange
-        ),
-      //  primaryColor: Colors.orangeAccent[200],
+        floatingActionButtonTheme:
+            FloatingActionButtonThemeData(backgroundColor: Colors.deepOrange),
+        //  primaryColor: Colors.orangeAccent[200],
         primarySwatch: Colors.deepOrange,
         brightness: Brightness.dark,
         cupertinoOverrideTheme: CupertinoThemeData(
@@ -38,7 +39,7 @@ class MyApp extends StatelessWidget {
             modalElevation: 10),
       ),
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
+      title: 'NorwayVPN',
       home: MyHomePage(title: 'NorwayVPN'),
     );
   }
@@ -68,7 +69,7 @@ class _MyHomePageState extends State<MyHomePage> {
   UploadTask task;
   String nameFile;
 
-  Future<void> _showAlertGialogDelete(
+  Future<void> _showAlertDialogDelete(
       List nameServer, List urlServer, int index, String filePath) async {
     return showDialog<void>(
         context: context,
@@ -97,7 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
         });
   }
 
-  Future<void> _showAlertGialogUploading(UploadTask task) async {
+  Future<void> _showAlertDialogUploading(UploadTask task) async {
     return showDialog<void>(
         context: context,
         barrierDismissible: true,
@@ -105,48 +106,47 @@ class _MyHomePageState extends State<MyHomePage> {
           return Container(
             height: 100,
             child: AlertDialog(
-
-              title: Text("Delte Server"),
-              content:  StreamBuilder<TaskSnapshot>(
-                    stream: task.snapshotEvents,
-                    builder: (context, snapShot) {
-                      if (snapShot.hasData) {
-                        final snap = snapShot.data;
-                        final progress = snap.bytesTransferred / snap.totalBytes;
-                        final percentage = (progress * 100).toStringAsFixed(2);
-                        return Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Uploading :',
-                              style:
-                              TextStyle(fontSize: 24, color: Colors.blueAccent),
-                            ),
-                            SizedBox(
-                              height: 15.0,
-                            ),
-                            LinearProgressIndicator(
-                              value: progress,
-                              minHeight: 6,
-                              backgroundColor: Colors.white,
-                              valueColor: AlwaysStoppedAnimation(Colors.deepOrange),
-                            ),
-                            SizedBox(
-                              height: 15.0,
-                            ),
-                            Text(
-                              '$percentage %',
-                              style:
-                              TextStyle(fontSize: 24, color: Colors.blueAccent),
-                            )
-                          ],
-                        );
-                      }  else {
-                        return Container();
-                      }
-                    }),
-
+              title: Text("Delete Server"),
+              content: StreamBuilder<TaskSnapshot>(
+                  stream: task.snapshotEvents,
+                  builder: (context, snapShot) {
+                    if (snapShot.hasData) {
+                      final snap = snapShot.data;
+                      final progress = snap.bytesTransferred / snap.totalBytes;
+                      final percentage = (progress * 100).toStringAsFixed(2);
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Uploading :',
+                            style: TextStyle(
+                                fontSize: 24, color: Colors.blueAccent),
+                          ),
+                          SizedBox(
+                            height: 15.0,
+                          ),
+                          LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 6,
+                            backgroundColor: Colors.white,
+                            valueColor:
+                                AlwaysStoppedAnimation(Colors.deepOrange),
+                          ),
+                          SizedBox(
+                            height: 15.0,
+                          ),
+                          Text(
+                            '$percentage %',
+                            style: TextStyle(
+                                fontSize: 24, color: Colors.blueAccent),
+                          )
+                        ],
+                      );
+                    } else {
+                      return Container();
+                    }
+                  }),
             ),
           );
         });
@@ -171,7 +171,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Center(
             child: Text(
           "Delete success",
-          style: TextStyle(fontSize: 20,color:Colors.deepOrange ),
+          style: TextStyle(fontSize: 20, color: Colors.deepOrange),
         )),
       ),
     ));
@@ -201,9 +201,8 @@ class _MyHomePageState extends State<MyHomePage> {
           });
         }
       });
-
-
-      _scaffoldKey.currentState.showSnackBar(SnackBar(
+      _scaffoldKey.currentState.showSnackBar(
+        SnackBar(
           backgroundColor: Colors.black54,
           content: Center(
             child: StreamBuilder<TaskSnapshot>(
@@ -214,44 +213,49 @@ class _MyHomePageState extends State<MyHomePage> {
                     final progress = snap.bytesTransferred / snap.totalBytes;
                     final percentage = (progress * 100).toStringAsFixed(2);
                     return Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(left:8.0),
-                            child: Text(
-                              'Uploading :',
-                              style:
-                                  TextStyle(fontSize: 20, color: Colors.deepOrangeAccent,fontWeight: FontWeight.w600),
-                            ),
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Text(
+                            'Uploading :',
+                            style: TextStyle(
+                                fontSize: 20,
+                                color: Colors.deepOrangeAccent,
+                                fontWeight: FontWeight.w600),
                           ),
-                          SizedBox(
-                            height: 18.0,
+                        ),
+                        SizedBox(
+                          height: 18.0,
+                        ),
+                        LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 8,
+                          backgroundColor: Colors.white,
+                          valueColor: AlwaysStoppedAnimation(Colors.deepOrange),
+                        ),
+                        SizedBox(
+                          height: 18.0,
+                        ),
+                        Center(
+                          child: Text(
+                            '$percentage %',
+                            style: TextStyle(
+                                fontSize: 22,
+                                color: Colors.deepOrangeAccent,
+                                fontWeight: FontWeight.w600),
                           ),
-                          LinearProgressIndicator(
-                            value: progress,
-                            minHeight: 8,
-                            backgroundColor: Colors.white,
-                            valueColor: AlwaysStoppedAnimation(Colors.deepOrange),
-                          ),
-                          SizedBox(
-                            height: 18.0,
-                          ),
-                          Center(
-                            child: Text(
-                              '$percentage %',
-                              style:
-                                  TextStyle(fontSize: 22, color: Colors.deepOrangeAccent,fontWeight: FontWeight.w600),
-                            ),
-                          )
-                        ],
-                      )
-                    ;
+                        )
+                      ],
+                    );
                   } else {
                     return Container();
                   }
                 }),
-          )));
+          ),
+        ),
+      );
       // ignore: deprecated_member_use
       _scaffoldKey.currentState.showSnackBar(SnackBar(
         backgroundColor: Colors.grey[900],
@@ -261,7 +265,7 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Center(
               child: Text(
             "The Upload Success",
-            style: TextStyle(fontSize: 20,color: Colors.deepOrange),
+            style: TextStyle(fontSize: 20, color: Colors.deepOrange),
           )),
         ),
       ));
@@ -282,30 +286,63 @@ class _MyHomePageState extends State<MyHomePage> {
       FilePickerResult result = await FilePicker.platform
           .pickFiles(allowMultiple: false, type: _pickType);
       List<String> name = result.names.toList();
-      nameFile = name
-          .asMap()
-          .values
-          .toString()
-          .replaceAll(")", "")
-          .replaceAll("(", "");
-      if (result != null) {
-        selectedFiles.clear();
-        result.files.forEach((selectedFile) {
-          File file = File(selectedFile.path);
-          selectedFiles.add(file);
-        });
-        selectedFiles.forEach((file) {
-          final UploadTask task = uploadFileToStorage(file, nameFile);
-          saveFileUrlToFirebase(task, true);
-
-          setState(() {
-            nameServer.add("${nameFile.replaceAll(".ovpn", "").substring(0,1).toUpperCase()}"+
-                "${nameFile.replaceAll(".ovpn", "").substring(1)}");
-            uploadedTasks.add(task);
+      if (name.first.contains(".ovpn")) {
+        nameFile = name
+            .asMap()
+            .values
+            .toString()
+            .replaceAll(")", "")
+            .replaceAll("(", "");
+        if (nameServer.contains(
+            "${nameFile.substring(0, 1).toUpperCase()}${nameFile.substring(1).replaceAll('.ovpn', "")}")) {
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text("The selected file is exist"),
+                actions: [
+                  MaterialButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text("Ok"),
+                  ),
+                ],
+              );
+            },
+          );
+        } else if (result != null) {
+          selectedFiles.clear();
+          result.files.forEach((selectedFile) {
+            File file = File(selectedFile.path);
+            selectedFiles.add(file);
           });
-        });
+          selectedFiles.forEach((file) {
+            final UploadTask task = uploadFileToStorage(file, nameFile);
+            saveFileUrlToFirebase(task, true);
+
+            setState(() {
+              nameServer.add(
+                  "${nameFile.replaceAll(".ovpn", "").substring(0, 1).toUpperCase()}" +
+                      "${nameFile.replaceAll(".ovpn", "").substring(1)}");
+              uploadedTasks.add(task);
+            });
+          });
+        } else {
+          print('error');
+        }
       } else {
-        print('error');
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: Text("The selected file is not a vpn config"),
+                actions: [
+                  MaterialButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text("Ok"),
+                  ),
+                ],
+              );
+            });
       }
     } catch (e) {
       print('eorre : $e');
@@ -337,36 +374,85 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  //--------------------------------------------------
+  bool hasConnection = false;
+  final Connectivity _connectivity = Connectivity();
+  StreamSubscription<ConnectivityResult> subscription;
+
+  Stream get connectionChange => connectionChangeController.stream;
+  StreamController connectionChangeController = StreamController.broadcast();
+
+  void _connectionChange(ConnectivityResult result) async {
+    bool newStateConnection = await checkConnection();
+    setState(() {
+      hasConnection = newStateConnection;
+    });
+    if (hasConnection) {
+      FirebaseStorage.instance.ref().listAll().then(
+        (value) {
+          setState(() async {
+            list = value;
+            for (int index = 0; index < list.items.length; index++) {
+              await downLoadServer(list.items
+                  .asMap()
+                  .values
+                  .elementAt(index)
+                  .fullPath
+                  .replaceAll(".ovpn", ""));
+              nameServer.add(
+                  "${list.items.asMap().values.elementAt(index).fullPath.replaceAll(".ovpn", "").substring(0, 1).toUpperCase()}${list.items.asMap().values.elementAt(index).fullPath.replaceAll(".ovpn", "").substring(1)}");
+              print(nameServer[index]);
+            }
+          });
+        },
+      );
+    }
+  }
+
+  Future<bool> checkConnection() async {
+    bool previousConnection = hasConnection;
+
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        setState(() {
+          hasConnection = true;
+        });
+      } else {
+        setState(() {
+          hasConnection = false;
+        });
+      }
+    } on SocketException catch (_) {
+      setState(() {
+        hasConnection = false;
+      });
+    }
+
+    //The connection status changed send out an update to all listeners
+    if (previousConnection != hasConnection) {
+      connectionChangeController.add(hasConnection);
+    }
+
+    return hasConnection;
+  }
+
+  //--------------------------------------------------
+
   @override
   void initState() {
+    checkConnection();
+    _connectivity.onConnectivityChanged.listen(_connectionChange);
     nameServer.clear();
-    FirebaseStorage.instance.ref().listAll().then((value) {
-      setState(() async {
-        list = value;
-        for (int index = 0; index < list.items.length; index++) {
-          await downLoadServer(list.items
-              .asMap()
-              .values
-              .elementAt(index)
-              .fullPath
-              .replaceAll(".ovpn", ""));
-          nameServer.add("${list.items
-              .asMap()
-              .values
-              .elementAt(index)
-              .fullPath
-              .replaceAll(".ovpn", "").substring(0,1).toUpperCase()}${list.items
-              .asMap()
-              .values
-              .elementAt(index)
-              .fullPath
-              .replaceAll(".ovpn", "").substring(1)}"
-              );
-          print(nameServer[index]);
-        }
-      });
-    });
     super.initState();
+  }
+
+  @override
+  void dispose() async {
+    // TODO: implement dispose
+    super.dispose();
+    //connectionChangeController.close();
+    await subscription.cancel();
   }
 
   @override
@@ -375,72 +461,88 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
-        title: Text(widget.title,style: TextStyle(fontWeight: FontWeight.w600),),
+        title: Text(
+          widget.title,
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
         centerTitle: true,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          selectFileToUpload();
-        },
-        tooltip: 'Add Server',
-        child: Icon(Icons.add),
-      ),
-      body: uploadedTasks.length == 0
-          ? Center(
-              child: Text(
-                "Import Server",
-                style: TextStyle(fontSize: 20,fontWeight: FontWeight.w600),
-              ),
+      floatingActionButton: hasConnection
+          ? FloatingActionButton(
+              onPressed: () {
+                selectFileToUpload();
+              },
+              tooltip: 'Add Server',
+              child: Icon(Icons.add),
             )
-          : ListView.separated(
-              itemBuilder: (context, index) {
-                return StreamBuilder<TaskSnapshot>(
-                  builder: (context, snapShot) {
-                    if (snapShot.hasError) {
-                      return Text("There is some error in uploading file");
-                    } else {
-                      //
-                      // sleep(Duration(seconds: 5));
-                      return snapShot.hasData && index >= 0
-                          ? (Container(
-                              child: ListTile(
-                                title: Padding(
-                                  padding: const EdgeInsets.only(left: 10),
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(left:8.0),
-                                    child: Text(
-                                      nameServer[index],
-                                      style: TextStyle(fontSize: 20,fontWeight: FontWeight.w600),
+          : null,
+      body: hasConnection
+          ? uploadedTasks.length == 0
+              ? Center(
+                  child: Text(
+                    "Import Server",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                  ),
+                )
+              : ListView.separated(
+                  itemBuilder: (context, index) {
+                    return StreamBuilder<TaskSnapshot>(
+                      builder: (context, snapShot) {
+                        if (snapShot.hasError) {
+                          return Text("There is some error in uploading file");
+                        } else {
+                          //
+                          // sleep(Duration(seconds: 5));
+                          return snapShot.hasData && index >= 0
+                              ? (Container(
+                                  child: ListTile(
+                                    title: Padding(
+                                      padding: const EdgeInsets.only(left: 10),
+                                      child: Padding(
+                                        padding:
+                                            const EdgeInsets.only(left: 8.0),
+                                        child: Text(
+                                          nameServer[index],
+                                          style: TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w600),
+                                        ),
+                                      ),
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: <Widget>[
+                                        Container(
+                                          child: IconButton(
+                                              icon: Icon(Icons.clear),
+                                              color: Colors.deepOrange[400],
+                                              onPressed: () {
+                                                _showAlertDialogDelete(
+                                                    nameServer,
+                                                    urlServer,
+                                                    index,
+                                                    urlServer[
+                                                        index]); // deleteServer(nameServer,urlServer,index,urlServer[index]);
+                                              }),
+                                        )
+                                      ],
                                     ),
                                   ),
-                                ),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    Container(
-                                      child: IconButton(
-                                          icon: Icon(Icons.clear),
-                                          color: Colors.deepOrange[400],
-                                          onPressed: () {
-                                            _showAlertGialogDelete(
-                                                nameServer,
-                                                urlServer,
-                                                index,
-                                                urlServer[index]); // deleteServer(nameServer,urlServer,index,urlServer[index]);
-                                          }),
-                                    )
-                                  ],
-                                ),
-                              ),
-                            ))
-                          : Container();
-                    }
+                                ))
+                              : Container();
+                        }
+                      },
+                      stream: uploadedTasks[index].snapshotEvents,
+                    );
                   },
-                  stream: uploadedTasks[index].snapshotEvents,
-                );
-              },
-              separatorBuilder: (context, index) => Divider(),
-              itemCount: nameServer.length),
+                  separatorBuilder: (context, index) => Divider(),
+                  itemCount: nameServer.length)
+          : Center(
+              child: Text(
+                "There is no internet connection",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+              ),
+            ),
 
       // This trailing comma makes auto-formatting nicer for build methods.
     );
