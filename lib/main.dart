@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -16,12 +17,29 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData(
+        floatingActionButtonTheme: FloatingActionButtonThemeData(
+          backgroundColor: Colors.deepOrange
+        ),
+      //  primaryColor: Colors.orangeAccent[200],
+        primarySwatch: Colors.deepOrange,
+        brightness: Brightness.dark,
+        cupertinoOverrideTheme: CupertinoThemeData(
+          primaryContrastingColor: Colors.deepOrange,
+          primaryColor: Colors.deepOrange,
+        ),
+        bottomSheetTheme: BottomSheetThemeData(
+            shape: OutlineInputBorder(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            modalElevation: 10),
+      ),
       debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(title: 'NorwayVPN'),
     );
   }
 }
@@ -50,7 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
   UploadTask task;
   String nameFile;
 
-  Future<void> _showAlertGialog(
+  Future<void> _showAlertGialogDelete(
       List nameServer, List urlServer, int index, String filePath) async {
     return showDialog<void>(
         context: context,
@@ -79,110 +97,179 @@ class _MyHomePageState extends State<MyHomePage> {
         });
   }
 
+  Future<void> _showAlertGialogUploading(UploadTask task) async {
+    return showDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) {
+          return Container(
+            height: 100,
+            child: AlertDialog(
+
+              title: Text("Delte Server"),
+              content:  StreamBuilder<TaskSnapshot>(
+                    stream: task.snapshotEvents,
+                    builder: (context, snapShot) {
+                      if (snapShot.hasData) {
+                        final snap = snapShot.data;
+                        final progress = snap.bytesTransferred / snap.totalBytes;
+                        final percentage = (progress * 100).toStringAsFixed(2);
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Uploading :',
+                              style:
+                              TextStyle(fontSize: 24, color: Colors.blueAccent),
+                            ),
+                            SizedBox(
+                              height: 15.0,
+                            ),
+                            LinearProgressIndicator(
+                              value: progress,
+                              minHeight: 6,
+                              backgroundColor: Colors.white,
+                              valueColor: AlwaysStoppedAnimation(Colors.deepOrange),
+                            ),
+                            SizedBox(
+                              height: 15.0,
+                            ),
+                            Text(
+                              '$percentage %',
+                              style:
+                              TextStyle(fontSize: 24, color: Colors.blueAccent),
+                            )
+                          ],
+                        );
+                      }  else {
+                        return Container();
+                      }
+                    }),
+
+            ),
+          );
+        });
+  }
+
   deleteServer(
       List nameServer, List urlServer, int index, String filePath) async {
     await _firebaseStorage.refFromURL(filePath).delete();
     setState(() {
+      uploadedTasks.removeAt(index);
       nameServer.removeAt(index);
       urlServer.removeAt(index);
     });
     print(
         "name : ${uploadedTasks.asMap().values} \n url : ${urlServer.length}");
+    // ignore: deprecated_member_use
     _scaffoldKey.currentState.showSnackBar(SnackBar(
-      duration: Duration(milliseconds: 600),
+      backgroundColor: Colors.grey[900],
+      duration: Duration(milliseconds: 900),
       content: Container(
         height: 20,
         child: Center(
             child: Text(
           "Delete success",
-          style: TextStyle(fontSize: 20),
+          style: TextStyle(fontSize: 20,color:Colors.deepOrange ),
         )),
       ),
     ));
+    int i, j = 0;
+    while (j < nameServer.length) {
+      if (nameServer[j] != '') {
+        nameServer[i] = nameServer[j];
+        uploadedTasks[i] = uploadedTasks[j];
+        urlServer[i] = urlServer[j];
+        i++;
+        j++;
+      } else {
+        j++;
+      }
+    }
   }
 
   saveFileUrlToFirebase(UploadTask task, bool etat) {
-    if(etat){task.snapshotEvents.listen((snapShot) {
-      if (snapShot.state == TaskState.success) {
-        snapShot.ref.getDownloadURL().then((fileUrl) {
-          setState(() {
-            //nameServer.single();
-            urlServer.add(fileUrl);
+    if (etat) {
+      task.snapshotEvents.listen((snapShot) {
+        if (snapShot.state == TaskState.success) {
+          snapShot.ref.getDownloadURL().then((fileUrl) {
+            setState(() {
+              //nameServer.single();
+              urlServer.add(fileUrl);
+            });
           });
-        });
-      }
-    }
-    );
-    _scaffoldKey.currentState.showSnackBar(SnackBar(
-        backgroundColor: Colors.transparent,
-        content: Center(
-          child: StreamBuilder<TaskSnapshot>(
-              stream: task.snapshotEvents,
-              builder: (context, snapShot) {
-                if (snapShot.hasData) {
-                  final snap = snapShot.data;
-                  final progress = snap.bytesTransferred / snap.totalBytes;
-                  final percentage = (progress * 100).toStringAsFixed(2);
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Uploading :',
-                        style:
-                        TextStyle(fontSize: 24, color: Colors.blueAccent),
-                      ),
-                      SizedBox(
-                        height: 15.0,
-                      ),
-                      /* LiquidLinearProgressIndicator(
-                          value: 0.5, // Defaults to 0.5.
-                          valueColor: AlwaysStoppedAnimation(Colors.black), // Defaults to the current Theme's accentColor.
-                          backgroundColor: Colors.white, // Defaults to the current Theme's backgroundColor.
-                          borderColor: Colors.deepPurpleAccent,
-                          borderWidth: 1.0,
-                          borderRadius: 2.0,
-                          direction: Axis.vertical, // The direction the liquid moves (Axis.vertical = bottom to top, Axis.horizontal = left to right). Defaults to Axis.horizontal.
-                          center: Text("Loading..."),
-                        ),*/
+        }
+      });
 
-                      LinearProgressIndicator(
-                        value: progress,
-                        minHeight: 5.5,
-                        backgroundColor: Colors.white,
-                      ),
-                      SizedBox(
-                        height: 15.0,
-                      ),
-                      Text(
-                        '$percentage %',
-                        style:
-                        TextStyle(fontSize: 24, color: Colors.blueAccent),
+
+      _scaffoldKey.currentState.showSnackBar(SnackBar(
+          backgroundColor: Colors.black54,
+          content: Center(
+            child: StreamBuilder<TaskSnapshot>(
+                stream: task.snapshotEvents,
+                builder: (context, snapShot) {
+                  if (snapShot.hasData) {
+                    final snap = snapShot.data;
+                    final progress = snap.bytesTransferred / snap.totalBytes;
+                    final percentage = (progress * 100).toStringAsFixed(2);
+                    return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left:8.0),
+                            child: Text(
+                              'Uploading :',
+                              style:
+                                  TextStyle(fontSize: 20, color: Colors.deepOrangeAccent,fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 18.0,
+                          ),
+                          LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 8,
+                            backgroundColor: Colors.white,
+                            valueColor: AlwaysStoppedAnimation(Colors.deepOrange),
+                          ),
+                          SizedBox(
+                            height: 18.0,
+                          ),
+                          Center(
+                            child: Text(
+                              '$percentage %',
+                              style:
+                                  TextStyle(fontSize: 22, color: Colors.deepOrangeAccent,fontWeight: FontWeight.w600),
+                            ),
+                          )
+                        ],
                       )
-                    ],
-                  );
-                } else {
-                  return Container();
-                }
-              }),
-        )));
-    _scaffoldKey.currentState.showSnackBar(SnackBar(
-      duration: Duration(milliseconds: 600),
-      content: Container(
-        height: 20,
-        child: Center(
-            child: Text(
-              "The upload success",
-              style: TextStyle(fontSize: 20),
-            )),
-      ),
-    ));
-  }
+                    ;
+                  } else {
+                    return Container();
+                  }
+                }),
+          )));
+      // ignore: deprecated_member_use
+      _scaffoldKey.currentState.showSnackBar(SnackBar(
+        backgroundColor: Colors.grey[900],
+        duration: Duration(milliseconds: 900),
+        content: Container(
+          height: 20,
+          child: Center(
+              child: Text(
+            "The Upload Success",
+            style: TextStyle(fontSize: 20,color: Colors.deepOrange),
+          )),
+        ),
+      ));
+    }
   }
 
-  uploadFileToStorage(File file,String filename) {
-    UploadTask task =
-        _firebaseStorage.ref().child(filename).putFile(file);
+  uploadFileToStorage(File file, String filename) {
+    UploadTask task = _firebaseStorage.ref().child(filename).putFile(file);
     task.snapshotEvents.listen((event) {
       print("cas ::{$event.state.toString()}");
     });
@@ -200,7 +287,7 @@ class _MyHomePageState extends State<MyHomePage> {
           .values
           .toString()
           .replaceAll(")", "")
-          .replaceAll("(", "").replaceAll(".ovpn", "");
+          .replaceAll("(", "");
       if (result != null) {
         selectedFiles.clear();
         result.files.forEach((selectedFile) {
@@ -208,11 +295,12 @@ class _MyHomePageState extends State<MyHomePage> {
           selectedFiles.add(file);
         });
         selectedFiles.forEach((file) {
-          final UploadTask task = uploadFileToStorage(file,nameFile);
+          final UploadTask task = uploadFileToStorage(file, nameFile);
           saveFileUrlToFirebase(task, true);
 
           setState(() {
-            nameServer.add(nameFile);
+            nameServer.add("${nameFile.replaceAll(".ovpn", "").substring(0,1).toUpperCase()}"+
+                "${nameFile.replaceAll(".ovpn", "").substring(1)}");
             uploadedTasks.add(task);
           });
         });
@@ -238,7 +326,7 @@ class _MyHomePageState extends State<MyHomePage> {
       await tempFile.create();
       await tempFile.writeAsStringSync(downLoadData.body);
 
-      final UploadTask task = uploadFileToStorage(tempFile,'$vpnItem.ovpn');
+      final UploadTask task = uploadFileToStorage(tempFile, '$vpnItem.ovpn');
       saveFileUrlToFirebase(task, false);
       setState(() {
         urlServer.add(url);
@@ -251,48 +339,57 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
+    nameServer.clear();
     FirebaseStorage.instance.ref().listAll().then((value) {
-      setState(() {
+      setState(() async {
         list = value;
         for (int index = 0; index < list.items.length; index++) {
-          nameServer.add(list.items
+          await downLoadServer(list.items
               .asMap()
               .values
               .elementAt(index)
               .fullPath
               .replaceAll(".ovpn", ""));
+          nameServer.add("${list.items
+              .asMap()
+              .values
+              .elementAt(index)
+              .fullPath
+              .replaceAll(".ovpn", "").substring(0,1).toUpperCase()}${list.items
+              .asMap()
+              .values
+              .elementAt(index)
+              .fullPath
+              .replaceAll(".ovpn", "").substring(1)}"
+              );
           print(nameServer[index]);
-          downLoadServer(nameServer[index]);
-
         }
-
       });
-      /*for (String item in nameServer) {
-           downLoadServer(item);
-        }*/
     });
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    //sleep(Duration(seconds: 5));
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(widget.title,style: TextStyle(fontWeight: FontWeight.w600),),
+        centerTitle: true,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           selectFileToUpload();
         },
-        tooltip: 'Add server',
+        tooltip: 'Add Server',
         child: Icon(Icons.add),
       ),
-      body: nameServer.length == 0
+      body: uploadedTasks.length == 0
           ? Center(
               child: Text(
                 "Import Server",
-                style: TextStyle(fontSize: 20),
+                style: TextStyle(fontSize: 20,fontWeight: FontWeight.w600),
               ),
             )
           : ListView.separated(
@@ -302,14 +399,19 @@ class _MyHomePageState extends State<MyHomePage> {
                     if (snapShot.hasError) {
                       return Text("There is some error in uploading file");
                     } else {
-                      return snapShot.hasData
+                      //
+                      // sleep(Duration(seconds: 5));
+                      return snapShot.hasData && index >= 0
                           ? (Container(
                               child: ListTile(
                                 title: Padding(
                                   padding: const EdgeInsets.only(left: 10),
-                                  child: Text(
-                                    nameServer[index],
-                                    style: TextStyle(fontSize: 18),
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left:8.0),
+                                    child: Text(
+                                      nameServer[index],
+                                      style: TextStyle(fontSize: 20,fontWeight: FontWeight.w600),
+                                    ),
                                   ),
                                 ),
                                 trailing: Row(
@@ -318,13 +420,13 @@ class _MyHomePageState extends State<MyHomePage> {
                                     Container(
                                       child: IconButton(
                                           icon: Icon(Icons.clear),
+                                          color: Colors.deepOrange[400],
                                           onPressed: () {
-                                            _showAlertGialog(
+                                            _showAlertGialogDelete(
                                                 nameServer,
                                                 urlServer,
                                                 index,
-                                                urlServer[
-                                                    index]); // deleteServer(nameServer,urlServer,index,urlServer[index]);
+                                                urlServer[index]); // deleteServer(nameServer,urlServer,index,urlServer[index]);
                                           }),
                                     )
                                   ],
@@ -338,9 +440,75 @@ class _MyHomePageState extends State<MyHomePage> {
                 );
               },
               separatorBuilder: (context, index) => Divider(),
-              itemCount: uploadedTasks.length),
+              itemCount: nameServer.length),
 
       // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
+/*
+class DialogAlert {
+  DialogAlert(this.context);
+
+  final BuildContext context ;
+
+  void hindAlert() {
+    return Navigator.of(context).pop();
+  }
+
+  Future< void > _showAlertGialogUploading(UploadTask task) async {
+    return showDialog<void>(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) {
+          return Container(
+            height: 100,
+            child: AlertDialog(
+
+              title: Text("Delte Server"),
+              content:  StreamBuilder<TaskSnapshot>(
+                  stream: task.snapshotEvents,
+                  builder: (context, snapShot) {
+                    if (snapShot.hasData) {
+                      final snap = snapShot.data;
+                      final progress = snap.bytesTransferred / snap.totalBytes;
+                      final percentage = (progress * 100).toStringAsFixed(2);
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Uploading :',
+                            style:
+                            TextStyle(fontSize: 24, color: Colors.blueAccent),
+                          ),
+                          SizedBox(
+                            height: 15.0,
+                          ),
+                          LinearProgressIndicator(
+                            value: progress,
+                            minHeight: 6,
+                            backgroundColor: Colors.white,
+                            valueColor: AlwaysStoppedAnimation(Colors.deepOrange),
+                          ),
+                          SizedBox(
+                            height: 15.0,
+                          ),
+                          Text(
+                            '$percentage %',
+                            style:
+                            TextStyle(fontSize: 24, color: Colors.blueAccent),
+                          )
+                        ],
+                      );
+                    }  else {
+                      return Container();
+                    }
+                  }),
+
+            ),
+          );
+        });
+  }
+
+}*/
