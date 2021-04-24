@@ -34,11 +34,12 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     checkConnection().then((value) {
-      if (value) {
+      if (value && Platform.isIOS) {
         try {
           FirebaseStorage.instance.ref().listAll().then(
             (value) {
               setState(() async {
+                list = null;
                 list = value;
                 for (int index = 0; index < list.items.length; index++) {
                   await downLoadServer(
@@ -63,7 +64,6 @@ class _HomeState extends State<Home> {
       }
     });
     _connectivity.onConnectivityChanged.listen(_connectionChange);
-    nameServer.clear();
     super.initState();
   }
 
@@ -411,7 +411,12 @@ class _HomeState extends State<Home> {
       try {
         FirebaseStorage.instance.ref().listAll().then(
           (value) {
+            setState(() {
+              nameServer.clear();
+            });
+
             setState(() async {
+              list = null;
               list = value;
               for (int index = 0; index < list.items.length; index++) {
                 await downLoadServer(
@@ -455,12 +460,10 @@ class _HomeState extends State<Home> {
         hasConnection = false;
       });
     }
-
     //The connection status changed send out an update to all listeners
     if (previousConnection != hasConnection) {
       connectionChangeController.add(hasConnection);
     }
-
     return hasConnection;
   }
 
