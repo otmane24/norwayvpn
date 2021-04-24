@@ -33,7 +33,35 @@ class _HomeState extends State<Home> {
 
   @override
   void initState() {
-    checkConnection();
+    checkConnection().then((value) {
+      if (value) {
+        try {
+          FirebaseStorage.instance.ref().listAll().then(
+            (value) {
+              setState(() async {
+                list = value;
+                for (int index = 0; index < list.items.length; index++) {
+                  await downLoadServer(
+                    list.items
+                        .asMap()
+                        .values
+                        .elementAt(index)
+                        .fullPath
+                        .replaceAll(".ovpn", ""),
+                  );
+                  nameServer.add(
+                      "${list.items.asMap().values.elementAt(index).fullPath.replaceAll(".ovpn", "").substring(0, 1).toUpperCase()}"
+                      "${list.items.asMap().values.elementAt(index).fullPath.replaceAll(".ovpn", "").substring(1)}");
+                  print(nameServer[index]);
+                }
+              });
+            },
+          );
+        } catch (e) {
+          print(e);
+        }
+      }
+    });
     _connectivity.onConnectivityChanged.listen(_connectionChange);
     nameServer.clear();
     super.initState();
@@ -380,27 +408,31 @@ class _HomeState extends State<Home> {
       hasConnection = newStateConnection;
     });
     if (hasConnection) {
-      FirebaseStorage.instance.ref().listAll().then(
-        (value) {
-          setState(() async {
-            list = value;
-            for (int index = 0; index < list.items.length; index++) {
-              await downLoadServer(
-                list.items
-                    .asMap()
-                    .values
-                    .elementAt(index)
-                    .fullPath
-                    .replaceAll(".ovpn", ""),
-              );
-              nameServer.add(
-                  "${list.items.asMap().values.elementAt(index).fullPath.replaceAll(".ovpn", "").substring(0, 1).toUpperCase()}"
-                  "${list.items.asMap().values.elementAt(index).fullPath.replaceAll(".ovpn", "").substring(1)}");
-              print(nameServer[index]);
-            }
-          });
-        },
-      );
+      try {
+        FirebaseStorage.instance.ref().listAll().then(
+          (value) {
+            setState(() async {
+              list = value;
+              for (int index = 0; index < list.items.length; index++) {
+                await downLoadServer(
+                  list.items
+                      .asMap()
+                      .values
+                      .elementAt(index)
+                      .fullPath
+                      .replaceAll(".ovpn", ""),
+                );
+                nameServer.add(
+                    "${list.items.asMap().values.elementAt(index).fullPath.replaceAll(".ovpn", "").substring(0, 1).toUpperCase()}"
+                    "${list.items.asMap().values.elementAt(index).fullPath.replaceAll(".ovpn", "").substring(1)}");
+                print(nameServer[index]);
+              }
+            });
+          },
+        );
+      } catch (e) {
+        print(e);
+      }
     }
   }
 
